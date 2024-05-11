@@ -119,48 +119,19 @@ app.get('/team-result', async(req,res)=>{
         let team = response[0];
         let data = calculatePoints(team);
 
-        let players = team.players
-        let playerTeam = [];
-        let newObj = {}
-        _.forEach(playerData, (obj) => {
-            if (_.includes(players, obj.Player)) {
-                let team = obj.Team;
-                if(newObj[team]){
-                    let player = obj.Player;
-                    newObj[team][player] = data[player]
-                    let totalPoints = newObj[team]['totalPoints'];
-                    totalPoints += data[player];
-                    newObj[team]['totalPoints'] = totalPoints;
-                }else{
-                    newObj[team] = {'totalPoints': 0}
-                }
-                playerTeam.push(obj);
+        let points = Object.values(data);
+        points.sort(function(a, b){return b - a});
+        let topScore = points[0];
+        let winners = [];
+        _.forOwn(data, (value, key)=>{
+            if(value === topScore){
+                winners.push(key);
             }
         })
-        if(newObj){
-            let team1 = ''
-            let team2 = ''
-            let totalPoint1 = '';
-            let totalPoint2 = '';
-            _.forOwn(newObj, (value, key)=>{
-                if(team1 === ''){
-                    team1 = key;
-                    totalPoint1 = newObj[team1]['totalPoints']
-                }else{
-                    team2 = key;
-                    totalPoint2 = newObj[team2]['totalPoints']
-                }
-            })
+        data['Winner'] = winners.join(", ");
 
-            if(totalPoint1 > totalPoint2){
-                newObj["Winner"] = team1
-            }else if(totalPoint1 < totalPoint2){
-                newObj["Winner"] = team2
-            }else{
-                newObj["Winner"] = team1 + " and " + team2;
-            }
-        }
-        res.status(200).send({ success: true, result: newObj });
+        // In data we have winner and all players individual scores
+        res.status(200).send({ success: true, data });
          
     } catch (error) {
         res.status(400).send({ success: false, message: error.message });
